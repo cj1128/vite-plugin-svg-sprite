@@ -1,0 +1,1 @@
+# Vite Plugin SVG Sprite
