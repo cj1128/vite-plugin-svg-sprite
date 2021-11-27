@@ -1,12 +1,16 @@
 {
-  "name": "vite-plugin-svg-sprite",
+  "name": "@cjting/vite-plugin-svg-sprite",
   "version": "0.1.0",
   "description": "Vite plugin for creating SVG sprites.",
   "main": "dist/index.esm.js",
   "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
   "scripts": {
+    "dev": "npm run build -- --watch",
     "build": "esbuild --bundle src/index.ts --platform=node --format=esm --outfile=dist/index.esm.js --external:vite",
-    "dev": "npm run build -- --watch"
+    "buildType": "tsc -p . --declaration --allowJs --emitDeclarationOnly",
+    "buildAll": "npm run build && npm run buildType",
+    "pub": "npm run buildAll && npm pub --access public"
   },
   "keywords": [
     "vite",
@@ -33,6 +37,7 @@
   "devDependencies": {
     "@types/node": "16.11.10",
     "esbuild": "0.14.0",
+    "typescript": "4.5.2",
     "vite": "2.6.14"
   },
   "dependencies": {

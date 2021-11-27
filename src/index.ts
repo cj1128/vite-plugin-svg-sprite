@@ -28,7 +28,6 @@ interface SVGGroup {
   dirSeparator: string
 }
 
-// TODO: generate types in dist
 export interface PluginOption {
   groups: SVGGroup[]
 }
@@ -64,9 +63,17 @@ export default (opt: PluginOption): Plugin => {
       return null
     },
 
-    // TODO: for build
-    load(id, ssr) {
-      return null
+    load(id) {
+      if (!isBuild || ![REGISTER_ID, NAMES_ID].includes(id)) return null
+      const { registerCode, namesCode } = genModuleCode(opt.groups)
+
+      if (id === REGISTER_ID) {
+        return registerCode
+      }
+
+      if (id === NAMES_ID) {
+        return namesCode
+      }
     },
 
     // for dev
