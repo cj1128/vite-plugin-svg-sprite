@@ -35,18 +35,9 @@ export interface PluginOption {
 const REGISTER_ID = "virtual:svg-sprite"
 const NAMES_ID = "virtual:svg-sprite/names"
 
-let hasInited = false
-
 // vite plugin doc: https://vitejs.dev/guide/api-plugin.html
 export default (opt: PluginOption): Plugin => {
   let isBuild = false
-
-  // prevent multiple installation of plugin
-  if (hasInited) {
-    fatal("should not instantiate this plugin multiple times")
-  } else {
-    hasInited = true
-  }
 
   return {
     name: "vite-plugin-svg-sprite",
@@ -156,9 +147,9 @@ function warning(text: string) {
     "\x1b[33mvite-plugin-svg-sprite\x1b[0m -> \x1b[90m" + text + "\x1b[0m"
   )
 }
-function fatal(text: string) {
-  throw new Error("vite-plugin-svg-sprite -> \x1b[90m" + text + "\x1b[0m")
-}
+// function fatal(text: string) {
+//   throw new Error("vite-plugin-svg-sprite -> \x1b[90m" + text + "\x1b[0m")
+// }
 
 function compileGroups(groups: SVGGroup[]): CompileResult {
   const symbols = []
