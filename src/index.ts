@@ -3,6 +3,7 @@ import { normalizePath } from "vite"
 import fg from "fast-glob"
 import fs from "fs"
 import path from "path"
+import cheerio from "cheerio"
 
 // path: svg file absoltue path
 type SymbolIdFunction = (path: string) => string
@@ -111,6 +112,8 @@ const SVG_DOM_ID = "__vite_plugin_svg_sprite__"
 function genModuleCode(groups: SVGGroup[]): ModuleCode {
   const { symbols, ids } = compileGroups(groups)
 
+  // NOTE(cj): can't set SVG elemetn to `display:none`
+  // This will make `defs` inside SVG not work
   const registerCode = `
     function loadSvg() {
       const body = document.body
@@ -118,7 +121,9 @@ function genModuleCode(groups: SVGGroup[]): ModuleCode {
       let svgDom = document.getElementById('${SVG_DOM_ID}')
       if(svgDom == null) {
         svgDom = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-        svgDom.style.display = 'none'
+        svgDom.style.position = "absolute"
+        svgDom.style.width = "0"
+        svgDom.style.height = "0"
         svgDom.id = '${SVG_DOM_ID}'
       }
 
@@ -161,12 +166,7 @@ function compileGroups(groups: SVGGroup[]): CompileResult {
 
       for (const svg of svgs) {
         const absPath = path.join(dir, svg)
-        const trimedContent = fs.readFileSync(absPath, "utf8").trim()
-
-        if (!checkSvgContent(trimedContent)) {
-          warning(`${absPath} is not a valid SVG element`)
-          continue
-        }
+        const content = fs.readFileSync(absPath, "utf8")
 
         const id = genSymboldId(dir, svg, group.symbolId, group.dirSeparator)
         if (ids[id] != null) {
@@ -176,7 +176,13 @@ function compileGroups(groups: SVGGroup[]): CompileResult {
           continue
         }
 
-        const symbol = svg2symbol(trimedContent, id)
+        const { symbol, err } = svg2symbol(content, id)
+        if (err !== "") {
+          warning(`${absPath} is not a valid SVG element: ${err}`)
+        }
+
+        // invalid svg
+        if (symbol === "") continue
 
         ids[id] = absPath
         symbols.push(symbol)
@@ -185,13 +191,6 @@ function compileGroups(groups: SVGGroup[]): CompileResult {
   }
 
   return { symbols, ids: Object.keys(ids) }
-}
-
-// svg should be a single svg element
-// begin with `<svg`
-// end with `</svg>`
-function checkSvgContent(trimedContent: string): boolean {
-  return trimedContent.startsWith("<svg ") && trimedContent.endsWith("</svg>")
 }
 
 // `rp` is path relative to root, e.g. a/b/c.svg
@@ -215,13 +214,46 @@ function genSymboldId(
   return config(absolutePath)
 }
 
-function svg2symbol(content: string, id: string): string {
-  const prefixLength = "<svg ".length
-  const suffixLength = "</svg>".length
+// need to transform ids inside content
+function svg2symbol(
+  content: string,
+  id: string
+): { symbol: string; err: string } {
+  const $ = cheerio.load(content)
+  const $root = $("svg")
 
-  return (
-    `<symbol id="${id}" ` +
-    content.slice(prefixLength, -suffixLength) +
-    "</symbol>"
-  )
+  // replace svg id
+  $root.attr("id", id)
+
+  // modify internal defined ids
+  const idMap: Record<string, string> = {}
+
+  $root.find("[id]").each((_i, elem) => {
+    const oldId = $(elem).attr("id")
+    const newId = `${id}_${oldId}`
+    idMap[oldId!] = newId
+    $(elem).attr("id", newId)
+  })
+
+  // modify internal `fill` which used ids
+  for (const elem of $root.find("[fill]")) {
+    const fill = $(elem).attr("fill")!.trim()
+    const regex = /^url\s*\(#(.+)\)$/
+    const res = regex.exec(fill)
+
+    if (res != null) {
+      const id = res[1]
+
+      // NOTE(cj): `id` should exist in idMap
+      if (idMap[id] == null) {
+        return { symbol: "", err: `fill attr ${fill} uses external id` }
+      }
+
+      $(elem).attr("fill", `url(#${idMap[id]})`)
+    }
+  }
+
+  $root.get(0).tagName = "symbol"
+
+  return { symbol: cheerio.html($root), err: "" }
 }

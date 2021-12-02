@@ -4,7 +4,7 @@
 
   .icons
     .icon
-      svg-icon(id="#icons1--archive")
+      svg-icon(id="#icons1--warning")
     .icon
       svg-icon(id="#icons1-d1-arrows-expand")
     .icon

@@ -4,9 +4,7 @@ A Vite plugin for creating SVG sprites.
 
 - Simple and intuitive [code](https://github.com/cj1128/vite-plugin-svg-sprite/blob/master/src/index.ts), do one thing and do it well. No SVG optimization and transformation involved, no bloated dependencies.
 - Support multiple groups, each group can have their own directories and symbolId naming scheme.
-- Lightweight, 2.5K and only depends on `fast-glob`.
-
-NOTE: Each SVG file **must be a single SVG element**, which means after trimed it should begin with `<svg ` and end with `</svg>`.
+- Lightweight, 3.5K and only depends on `fast-glob` and `cheerio`.
 
 ## Install & Usage
 
