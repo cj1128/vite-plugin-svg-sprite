@@ -131,11 +131,7 @@ function genModuleCode(groups: SVGGroup[]): ModuleCode {
       body.insertBefore(svgDom, body.firstChild)
     }
 
-    if(document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', loadSvg)
-    } else {
-      loadSvg()
-    }
+    loadSvg()
   `
   const namesCode = `export default ${JSON.stringify(ids)}`
 
