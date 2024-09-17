@@ -57,7 +57,11 @@ export default (opt: PluginOption): Plugin => {
 
     load(id) {
       id = id.slice(1)
-      if (!isBuild || ![REGISTER_ID, NAMES_ID].includes(id)) return null
+
+      if (![REGISTER_ID, NAMES_ID].includes(id)) return
+
+      if(!isBuild) return ""
+
       const { registerCode, namesCode } = genModuleCode(opt.groups)
 
       if (id === REGISTER_ID) {
@@ -67,8 +71,6 @@ export default (opt: PluginOption): Plugin => {
       if (id === NAMES_ID) {
         return namesCode
       }
-
-      return null
     },
 
     // for dev
@@ -252,7 +254,7 @@ function svg2symbol(
     }
   }
 
-  $root.get(0).tagName = "symbol"
+  $root.get(0)!.tagName = "symbol"
 
   return { symbol: $root.toString()!, err: "" }
 }

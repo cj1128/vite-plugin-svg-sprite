@@ -1,3 +1,7 @@
+# 0.2.5
+
+- Fix vite pre-transform error again.
+
 # 0.2.4
 
 - update peer dependency `cheerio` version to `>=1.0.0`, previously it was `>=1.0.0-rc.10` and apis are incompatible.
